@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>แฟลชการ์ดคำศัพท์</title>
+<style>
+:root{--bg:#f6f5f1;--card:#fff;--ink:#1f2328;--mute:#6b7280;--acc:#3b5bdb;--line:#d9d7cf;color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#16181d;--card:#22252c;--ink:#ecebe6;--mute:#9aa0aa;--acc:#8fa6ff;--line:#383c45;color-scheme:dark}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Noto Sans Thai",system-ui,sans-serif;min-height:100vh}
+.wrap{max-width:560px;margin:0 auto;padding:16px}
+h1{font-size:20px;margin:4px 0 12px}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+button,select{font:inherit;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:10px;padding:8px 12px;cursor:pointer}
+button.on{background:var(--acc);color:#fff;border-color:var(--acc)}
+.card{perspective:1000px;height:260px;margin:14px 0;cursor:pointer}
+.in{position:relative;width:100%;height:100%;transition:transform .5s;transform-style:preserve-3d}
+.card.flip .in{transform:rotateY(180deg)}
+.face{position:absolute;inset:0;backface-visibility:hidden;background:var(--card);border:1px solid var(--line);border-radius:18px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;text-align:center}
+.back{transform:rotateY(180deg)}
+.en{font-size:30px;font-weight:600;line-height:1.25}
+.th{font-size:30px;font-weight:600}
+.tag{position:absolute;top:12px;left:14px;font-size:12px;color:var(--mute)}
+.star{position:absolute;top:8px;right:12px;font-size:22px;background:none;border:0;padding:4px}
+.hint{color:var(--mute);font-size:13px;margin-top:14px}
+.speak{margin-top:16px;font-size:18px}
+.nav{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.nav button{flex:1;padding:12px}
+.count{color:var(--mute);font-size:14px;text-align:center;min-width:70px;flex:0 0 auto}
+.bar{height:6px;background:var(--line);border-radius:3px;overflow:hidden;margin:6px 0 4px}
+.bar i{display:block;height:100%;background:var(--acc);width:0;transition:width .2s}
+.gram{margin-top:20px;padding:12px 14px;border:1px dashed var(--line);border-radius:12px;font-size:14px;color:var(--mute)}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>แฟลชการ์ดคำศัพท์ 🔊</h1>
+<div class="row">
+<select id="unit" aria-label="เลือกบท"></select>
+<button id="shuf">สุ่มลำดับ</button>
+<button id="auto" class="on">อ่านออกเสียงอัตโนมัติ</button>
+<button id="rev">ไทย→อังกฤษ</button>
+</div>
+<div class="row">
+<label>ความเร็ว <select id="rate"><option value="0.7">ช้า</option><option value="0.9" selected>ปกติ</option><option value="1.1">เร็ว</option></select></label>
+<label>สำเนียง <select id="acc"><option value="en-US">US</option><option value="en-GB">UK</option></select></label>
+<button id="starOnly">เฉพาะที่ติดดาว</button>
+</div>
+<div class="bar"><i id="prog"></i></div>
+<div class="count" id="cnt" style="text-align:left"></div>
+
+<div class="card" id="card" tabindex="0" aria-label="การ์ด กดเพื่อพลิก">
+<div class="in">
+<div class="face front"><span class="tag" id="tagF"></span><button class="star" id="starF" aria-label="ติดดาว">☆</button><div class="en" id="front"></div><button class="speak" id="spk">🔊 ฟังเสียง</button><div class="hint">แตะเพื่อพลิก</div></div>
+<div class="face back"><span class="tag" id="tagB"></span><div class="th" id="back"></div><button class="speak" id="spk2">🔊 ฟังเสียง</button></div>
+</div>
+</div>
+
+<div class="nav">
+<button id="prev">← ก่อนหน้า</button>
+<button id="next">ถัดไป →</button>
+</div>
+<div class="hint" style="text-align:center">ลัด: ← → เปลี่ยนการ์ด · เว้นวรรค พลิก · S ฟังเสียง</div>
+<div class="gram">📝 แกรมม่าในโน้ต: บท 6 = V2 + had V3 · บท 8 = if</div>
+</div>
+
+<script>
+var RAW = {
+"บท 6":[["angry","โกรธ"],["in a hurry","รีบ"],["noisy","เสียงดัง"],["patient","อดทน"],["cheerful","ร่าเริง"],["careless","สะเพร่า"],["reluctant to say goodbye","ไม่อยากกล่าวคำอำลา"],["anxious about her baby","กังวลเกี่ยวกับลูก"],["enthusiastic about music","กระตือรือร้นกับดนตรี"],["late for a flight","สายสำหรับเที่ยวบิน"],["the weather","สภาพอากาศ"],["runway traffic","การจราจรบนรันเวย์"],["mechanical problems","มีปัญหาทางกล"]],
+"บท 8":[["vehicle traffic","การจราจรของยานพาหนะ"],["art scene","วงการศิลปะ"],["bike lanes","เลนจักรยาน"],["nightlife","ผับ"],["pedestrians","คนเดินเท้า"],["public transportation","การขนส่งสาธารณะ"],["crime rate","อัตราอาชญากรรม"],["job opportunities","โอกาสในการทำงาน"],["public parks","สวนสาธารณะ"],["school system","ระบบโรงเรียน"],["housing prices","ราคาที่อยู่อาศัย"],["cost of living","ค่าครองชีพ"],["shops and restaurants","ร้านค้าและร้านอาหาร"],["air quality","คุณภาพอากาศ"]],
+"บท 12":[["article","บทความ"],["news site","เว็บข่าว"],["citizen journalist","นักข่าวพลเมือง"],["camera operator","ตากล้อง"],["weather report","รายงานสภาพอากาศ"],["breaking news","ข่าวด่วน"],["headline","พาดหัว"],["reporter","ผู้สื่อข่าว"],["editor","บรรณาธิการ"],["update","อัปเดต"],["column","คอลัมน์"],["politics","การเมือง"],["blogger","นักเขียนบล็อก"],["broadcast","ออกอากาศ"],["journalist","นักข่าว"],["business","ธุรกิจ"]]
+};
+var STARS = {};
+var $ = function(id){return document.getElementById(id)};
+var all = [];
+Object.keys(RAW).forEach(function(u){RAW[u].forEach(function(p){all.push({u:u,en:p[0],th:p[1]})})});
+var deck = [], i = 0, auto = true, rev = false, starOnly = false;
+
+var sel = $("unit");
+[["all","ทุกบท"]].concat(Object.keys(RAW).map(function(k){return [k,k]})).forEach(function(o){
+  var op = document.createElement("option"); op.value = o[0]; op.textContent = o[1]; sel.appendChild(op);
+});
+
+function build(shuffle){
+  deck = all.filter(function(c){
+    return (sel.value==="all"||c.u===sel.value) && (!starOnly || STARS[c.en]);
+  });
+  if(shuffle){ for(var k=deck.length-1;k>0;k--){var j=Math.floor(Math.random()*(k+1));var t=deck[k];deck[k]=deck[j];deck[j]=t;} }
+  i = 0; render(false);
+}
+
+function speak(text){
+  try{
+    if(!window.speechSynthesis) return;
+    speechSynthesis.cancel();
+    var u = new SpeechSynthesisUtterance(text);
+    u.lang = $("acc").value; u.rate = parseFloat($("rate").value);
+    var vs = speechSynthesis.getVoices().filter(function(v){return v.lang.replace("_","-")===u.lang});
+    if(vs.length) u.voice = vs[0];
+    speechSynthesis.speak(u);
+  }catch(e){}
+}
+
+function render(say){
+  var c = deck[i];
+  $("card").classList.remove("flip");
+  if(!c){ $("front").textContent="ไม่มีการ์ด"; $("back").textContent=""; $("cnt").textContent="0 / 0"; $("prog").style.width="0"; return; }
+  $("front").textContent = rev ? c.th : c.en;
+  $("back").textContent = rev ? c.en : c.th;
+  $("front").className = rev ? "th" : "en";
+  $("back").className = rev ? "en" : "th";
+  $("tagF").textContent = $("tagB").textContent = c.u;
+  $("starF").textContent = STARS[c.en] ? "★" : "☆";
+  $("cnt").textContent = (i+1) + " / " + deck.length;
+  $("prog").style.width = ((i+1)/deck.length*100) + "%";
+  if(say && auto && !rev) speak(c.en);
+}
+
+function go(d){ if(!deck.length) return; i = (i + d + deck.length) % deck.length; render(true); }
+function flip(){ $("card").classList.toggle("flip"); }
+function say(){ var c = deck[i]; if(c) speak(c.en); }
+
+$("card").addEventListener("click", function(e){
+  if(e.target.closest("button")) return; flip();
+});
+$("spk").onclick = say; $("spk2").onclick = say;
+$("starF").onclick = function(){ var c = deck[i]; if(!c) return; STARS[c.en] = !STARS[c.en]; render(false); };
+$("prev").onclick = function(){go(-1)}; $("next").onclick = function(){go(1)};
+$("shuf").onclick = function(){build(true)};
+sel.onchange = function(){build(false)};
+$("auto").onclick = function(){ auto = !auto; this.classList.toggle("on", auto); };
+$("rev").onclick = function(){ rev = !rev; this.textContent = rev ? "อังกฤษ→ไทย" : "ไทย→อังกฤษ"; render(false); };
+$("starOnly").onclick = function(){ starOnly = !starOnly; this.classList.toggle("on", starOnly); build(false); };
+document.addEventListener("keydown", function(e){
+  if(e.target.tagName==="SELECT") return;
+  if(e.key==="ArrowRight") go(1);
+  else if(e.key==="ArrowLeft") go(-1);
+  else if(e.key===" "){ e.preventDefault(); flip(); }
+  else if(e.key==="s"||e.key==="S") say();
+});
+if(window.speechSynthesis){ speechSynthesis.onvoiceschanged = function(){}; }
+build(false);
+</script>
+</body>
+</html>
